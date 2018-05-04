@@ -39,6 +39,9 @@ def read_labels(filename):
 			labels[words[0]] = words[1:] 
 	return labels
 
+def split_data(graph):
+	print(graph)
+
 def calculator(adjacency, nRw):
 	# This function can replace the calculator() function in the calcDSD.py file
     # This is the original function in the calcDSD.py file (for comparison purposes)
@@ -71,11 +74,6 @@ def calculator(adjacency, nRw):
         except LinAlgError:
         	return squareform(pdist(inv(np.eye(n) - p - pi.T + (np.eye(n) * 10e-9)),metric='cityblock'))
 
-# Read in network and labels using the above functions
-G = read_network(NETWORK_DATA)
-mips1 = read_labels(MIPS1)
-nx.set_node_attributes(G, mips1, 'labels')
-
 # Prints out basic attributes of the network
 def show_basic_attributes(G):
 	print ("Network holds " + str(len(G.nodes)) + " proteins.")
@@ -88,9 +86,9 @@ def show_basic_attributes(G):
 
 
 # Conducts a small exploratory data analysis on the network
-def show_eda():
+def show_eda(mips):
 	# Shows the frequency distribution of the NUMBER of labels
-	labels = mips1.values()
+	labels = mips.values()
 	lengths = list(map(len, labels))
 	plt.figure(1)
 	plt.hist(lengths, bins=np.arange(1, 12), align='left', rwidth=0.5, histtype='bar')
@@ -108,7 +106,8 @@ def show_eda():
 
 	# Visualizes the correlations between labels as a heatmap
 	unique_labels = list(set(flattened))
-	matrix_i = np.zeros((18,18), dtype=int)
+	idx_len = len(unique_labels)
+	matrix_i = np.zeros((idx_len,idx_len), dtype=int)
 	corr_matrix = pd.DataFrame(data=matrix_i, index=unique_labels, columns=unique_labels, dtype=np.int)
 	for label_set in labels:
 		set_length = len(label_set)
@@ -141,5 +140,15 @@ def show_eda():
 # gt_dict = nx.get_node_attributes(G, 'labels')
 # sc = SpectralClustering(1000`, affinity='rbf', assign_labels='kmeans', n_jobs=-1)
 
-show_basic_attributes(G)
-show_eda()
+
+
+if __name__ == '__main__':
+	# Read in network and labels using the above functions
+	G = read_network(NETWORK_DATA)
+	#split_data(G)
+	mips1 = read_labels(MIPS1)
+	nx.set_node_attributes(G, mips1, 'labels')
+	#split_data(G)
+
+	show_basic_attributes(G)
+	show_eda(mips1)
