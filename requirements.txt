@@ -27,7 +27,6 @@ pytest==3.5.1
 python-dateutil==2.6.1
 pytz==2018.3
 PyYAML==3.12
-ray==0.4.0
 redis==2.10.6
 scikit-learn==0.19.1
 scipy==1.0.0
