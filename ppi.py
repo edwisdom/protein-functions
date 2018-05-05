@@ -40,7 +40,17 @@ def read_labels(filename):
 	return labels
 
 def split_data(graph):
-	print(graph)
+	for node in graph.nodes:
+		try:
+			print(node, graph.node[node]['labels'])
+			if np.random.rand() > .7:
+				graph.node[node]['purpose'] = "validation"
+			else:
+				graph.node[node]['purpose'] = "train"
+		except:
+			print(node, " does not have any labels")
+			graph.node[node]['purpose'] = "test"
+		print("\tNode is for purpose:", graph.node[node]['purpose'])
 
 def calculator(adjacency, nRw):
 	# This function can replace the calculator() function in the calcDSD.py file
@@ -145,10 +155,9 @@ def show_eda(mips):
 if __name__ == '__main__':
 	# Read in network and labels using the above functions
 	G = read_network(NETWORK_DATA)
-	#split_data(G)
 	mips1 = read_labels(MIPS1)
 	nx.set_node_attributes(G, mips1, 'labels')
-	#split_data(G)
+	split_data(G)
 
 	show_basic_attributes(G)
 	show_eda(mips1)
