@@ -97,9 +97,9 @@ def show_basic_attributes(G):
 	print ("Network holds " + str(len(G.nodes)) + " proteins.")
 	print ("There are " + str(len(G.edges)) + " edges.")
 	total_labels = 0
-	for i in mips1.values():
+	for i in mips.values():
 		total_labels += len(i)
-	print ("We have labels for " + str(len(mips1.keys())) + " proteins.")
+	print ("We have labels for " + str(len(mips.keys())) + " proteins.")
 	print ("There are " + str(total_labels) + " total labels.") 
 
 
@@ -171,9 +171,6 @@ def compute_jaccard_score(y_true, y_pred, normalize=True, sample_weight=None):
 			predictions = y_pred[y]
 		except:
 			predictions = []
-		print(y)
-		print(labels)
-		print(predictions)
 		lab_set = set(labels)
 		pred_set = set(predictions)
 		jac_sim = len(lab_set.intersection(pred_set)) / len(lab_set.union(pred_set))
@@ -181,15 +178,26 @@ def compute_jaccard_score(y_true, y_pred, normalize=True, sample_weight=None):
 		#avg_accuracy += metrics.jaccard_similarity_score(labels, predictions, normalize, sample_weight)
 	return avg_accuracy/len(y_true)
 
+def mipsToLabels(mips, unique_labels):
+	i = 0
+	label_mat = np.zeros(len(mips)*len(unique_labels)).reshape(len(mips), len(unique_labels))
+	key_index_map = {}
+	for key in mips:
+		key_index_map[key] = i
+		orig_labs = mips[key]
+		label_mat[i] = [int(label in orig_labs) for label in unique_labels]
+		i+=1
+	return label_mat, key_index_map
+
 if __name__ == '__main__':
 	# Read in network and labels using the above functions
 	G = read_network(NETWORK_DATA)
-	mips1, unique_labels = read_labels(MIPS1)
-	nx.set_node_attributes(G, mips1, 'labels')
-	train, test = split_data(mips1, .7)
+	mips, unique_labels = read_labels(MIPS1)
+	nx.set_node_attributes(G, mips, 'labels')
+	train, test = split_data(mips, .7)
 
 	evalMetrics = getEvalMetrics()
-	print(evalMetrics['jaccard_score'](mips1,train))
-
-	#show_basic_attributes(G)
-	#show_eda(mips1)
+	print(evalMetrics['jaccard_score'](mips,train))
+	
+	show_basic_attributes(G)
+	show_eda(mips)
