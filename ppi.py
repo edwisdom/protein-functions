@@ -37,20 +37,28 @@ def read_labels(filename):
 		for line in f:
 			words = line.split()
 			labels[words[0]] = words[1:] 
-	return labels
+	unique_labels = list(set([item for sublist in labels.values() for item in sublist]))
+	return labels, unique_labels
 
-def split_data(graph):
-	for node in graph.nodes:
-		try:
-			print(node, graph.node[node]['labels'])
-			if np.random.rand() > .7:
-				graph.node[node]['purpose'] = "validation"
-			else:
-				graph.node[node]['purpose'] = "train"
-		except:
-			print(node, " does not have any labels")
-			graph.node[node]['purpose'] = "test"
-		print("\tNode is for purpose:", graph.node[node]['purpose'])
+def split_data(mips, split):
+	train = {}
+	test = {}
+	for line in mips:
+		if np.random.rand() > split:
+			test[line] = mips[line]
+		else:
+			train[line] = mips[line]
+		# try:
+		# 	print(node, graph.node[node]['labels'])
+		# 	if np.random.rand() > .7:
+		# 		graph.node[node]['purpose'] = "validation"
+		# 	else:
+		# 		graph.node[node]['purpose'] = "train"
+		# except:
+		# 	print(node, " does not have any labels")
+		# 	graph.node[node]['purpose'] = "test"
+		# print("\tNode is for purpose:", graph.node[node]['purpose'])
+	return (train, test)
 
 def calculator(adjacency, nRw):
 	# This function can replace the calculator() function in the calcDSD.py file
@@ -150,14 +158,38 @@ def show_eda(mips):
 # gt_dict = nx.get_node_attributes(G, 'labels')
 # sc = SpectralClustering(1000`, affinity='rbf', assign_labels='kmeans', n_jobs=-1)
 
+def getEvalMetrics():
+	d = {}
+	d['jaccard_score'] = compute_jaccard_score
+	return d
 
+def compute_jaccard_score(y_true, y_pred, normalize=True, sample_weight=None):
+	avg_accuracy = 0
+	for y in y_true:
+		labels = y_true[y]
+		try:
+			predictions = y_pred[y]
+		except:
+			predictions = []
+		print(y)
+		print(labels)
+		print(predictions)
+		lab_set = set(labels)
+		pred_set = set(predictions)
+		jac_sim = len(lab_set.intersection(pred_set)) / len(lab_set.union(pred_set))
+		avg_accuracy += jac_sim
+		#avg_accuracy += metrics.jaccard_similarity_score(labels, predictions, normalize, sample_weight)
+	return avg_accuracy/len(y_true)
 
 if __name__ == '__main__':
 	# Read in network and labels using the above functions
 	G = read_network(NETWORK_DATA)
-	mips1 = read_labels(MIPS1)
+	mips1, unique_labels = read_labels(MIPS1)
 	nx.set_node_attributes(G, mips1, 'labels')
-	split_data(G)
+	train, test = split_data(mips1, .7)
 
-	show_basic_attributes(G)
-	show_eda(mips1)
+	evalMetrics = getEvalMetrics()
+	print(evalMetrics['jaccard_score'](mips1,train))
+
+	#show_basic_attributes(G)
+	#show_eda(mips1)
