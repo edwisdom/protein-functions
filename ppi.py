@@ -27,9 +27,9 @@ def read_network(filename):
 		for line in f:
 			words = line.split()
 			G.add_edge(words[0], words[1])
-	subgraph_l = nx.connected_component_subgraphs(G)
-	max_G = list(subgraph_l)[0]
-	for g in list(subgraph_l)[1:]:
+	subgraph_l = list(nx.connected_component_subgraphs(G))
+	max_G = subgraph_l[0]
+	for g in subgraph_l[1:]:
 		max_G = g if len(g.nodes) > len(max_G.nodes) else max_G
 	return max_G
 
@@ -196,18 +196,39 @@ def mipsToLabels(mips, unique_labels):
 if __name__ == '__main__':
 	# Read in network and labels using the above functions
 	G = read_network(NETWORK_DATA)
+	print("Number of connected components: {}".format(nx.number_connected_components(G)))
+	print("Number of nodes in graph: {}".format(len(G.nodes)))
 	mips, unique_labels = read_labels(MIPS1)
 	nx.set_node_attributes(G, mips, 'labels')
 	A = nx.adjacency_matrix(G).toarray()
-	dsd_A = calculator(A, 3)
+
+	try:
+		start = time.time()
+		dsd_A = np.load('dsd.npy')
+		end = time.time()
+		print("Numpy load of DSD took " + str (end-start) + " seconds.")
+	except:
+		dsd_A = calculator(A, 3)
+		print('6')
+		start = time.time()
+		np.save("dsd.npy", dsd_A)
+		end = time.time()
+		print("Numpy save of DSD took " + str (end-start) + " seconds.")
+	
+	# dsd_G = nx.from_numpy_matrix(dsd_A)
+	# print("Number of connected components: {}".format(nx.number_connected_components(dsd_G)))
+	# dsd_subgraph_l = nx.connected_component_subgraphs(dsd_G)
+	# print(gs)
+	#print("Number of nodes in graph: {}".format(len(dsd_G.nodes)))
+
+
 	start = time.time()
-	np.save("dsd.npy", dsd_A)
-	end = time.time()
-	print("Numpy save of DSD took " + str (end-start) + " seconds.")
-	start = time.time()
-	sc = SpectralClustering(1000, affinity='rbf', assign_labels='kmeans', n_jobs=-1, n_init=14)
+	sc = SpectralClustering(20, affinity='precomputed', assign_labels='kmeans', n_jobs=-1, n_init=14)
+	print('hi')
+
 	sc.fit(dsd_A)
 	end = time.time()
+	print('9')
 	print ("Spectral clustering took " + str(end-start) + " seconds.")
 	start = time.time()
 	np.save("sc_labels.npy", sc.labels_)
