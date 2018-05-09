@@ -199,6 +199,9 @@ if __name__ == '__main__':
 	print("Number of connected components: {}".format(nx.number_connected_components(G)))
 	print("Number of nodes in graph: {}".format(len(G.nodes)))
 	mips, unique_labels = read_labels(MIPS1)
+	# show_basic_attributes(G)
+	# show_eda(mips)
+
 	nx.set_node_attributes(G, mips, 'labels')
 	A = nx.adjacency_matrix(G).toarray()
 
@@ -215,30 +218,39 @@ if __name__ == '__main__':
 		end = time.time()
 		print("Numpy save of DSD took " + str (end-start) + " seconds.")
 	
+	number_of_clusters = 5
+	random_clusters = np.random.randint(0,number_of_clusters,dsd_A.shape[0])
+	cutoff_size = 450
+
+	for i in range(number_of_clusters):
+		num_clust = (random_clusters == i).sum()
+		print("There are {} clusters of size {}".format(num_clust, i))
+		if num_clust > cutoff_size:
+			clust_idx = [idx for idx, x in enumerate(random_clusters) if x == i]
+			for_subgraphing = dsd_A[clust_idx,:][:,clust_idx]
+
+
 	# dsd_G = nx.from_numpy_matrix(dsd_A)
 	# print("Number of connected components: {}".format(nx.number_connected_components(dsd_G)))
 	# dsd_subgraph_l = nx.connected_component_subgraphs(dsd_G)
 	# print(gs)
-	#print("Number of nodes in graph: {}".format(len(dsd_G.nodes)))
+	# print("Number of nodes in graph: {}".format(len(dsd_G.nodes)))
 
 
-	start = time.time()
-	sc = SpectralClustering(20, affinity='precomputed', assign_labels='kmeans', n_jobs=-1, n_init=14)
-	print('hi')
+	# start = time.time()
+	# sc = SpectralClustering(20, affinity='precomputed', assign_labels='kmeans', n_jobs=-1, n_init=2)
+	# sc.fit(dsd_A)
+	# end = time.time()
+	# print ("Spectral clustering took " + str(end-start) + " seconds.")
 
-	sc.fit(dsd_A)
-	end = time.time()
-	print('9')
-	print ("Spectral clustering took " + str(end-start) + " seconds.")
-	start = time.time()
-	np.save("sc_labels.npy", sc.labels_)
-	end = time.time()
-	print ("Numpy save of clustering labels took " + str(end-start) + " seconds.")
+
+	# start = time.time()
+	# np.save("sc_labels.npy", sc.labels_)
+	# end = time.time()
+	# print ("Numpy save of clustering labels took " + str(end-start) + " seconds.")
 	
 	# train, test = split_data(mips, .7)
 
 	# evalMetrics = getEvalMetrics()
 	# print(evalMetrics['jaccard_score'](mips,train))
 	
-	# show_basic_attributes(G)
-	# show_eda(mips)
