@@ -27,7 +27,11 @@ def read_network(filename):
 		for line in f:
 			words = line.split()
 			G.add_edge(words[0], words[1])
-	return G
+	subgraph_l = nx.connected_component_subgraphs(G)
+	max_G = list(subgraph_l)[0]
+	for g in list(subgraph_l)[1:]:
+		max_G = g if len(g.nodes) > len(max_G.nodes) else max_G
+	return max_G
 
 # Reads in a text file line-by-line and returns a dict with proteins as keys,
 # and a list of labels as values.
@@ -194,10 +198,16 @@ if __name__ == '__main__':
 	G = read_network(NETWORK_DATA)
 	mips, unique_labels = read_labels(MIPS1)
 	nx.set_node_attributes(G, mips, 'labels')
-	train, test = split_data(mips, .7)
+	sparse_A = nx.adjacency_matrix(G)
+	A = nx.to_numpy_matrix(sparse_A)
+	dsd_A = calculator(A, 3)
+	sc = SpectralClustering(20, affinity='precomputed', n_init=2, assign_labels='kmeans', n_jobs=3) 
+	sc.fit(A)
+	print (sc.labels_)
+	# train, test = split_data(mips, .7)
 
-	evalMetrics = getEvalMetrics()
-	print(evalMetrics['jaccard_score'](mips,train))
+	# evalMetrics = getEvalMetrics()
+	# print(evalMetrics['jaccard_score'](mips,train))
 	
-	show_basic_attributes(G)
-	show_eda(mips)
+	# show_basic_attributes(G)
+	# show_eda(mips)
