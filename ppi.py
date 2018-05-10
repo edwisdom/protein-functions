@@ -117,6 +117,7 @@ def show_eda(mips):
 	plt.title('Frequency Distribution of the Number of Labels')
 	plt.xlabel('Number of Labels')
 	plt.ylabel('Number of Proteins')
+	plt.savefig("freq_num_labels.png", bbox_inches='tight')
 
 	# Shows the frequency distribution of EACH particular label
 	plt.figure(2)
@@ -125,6 +126,7 @@ def show_eda(mips):
 	plt.title('Frequency Distribution of the Labels')
 	plt.xlabel('Labels')
 	plt.ylabel('Number of Proteins')
+	plt.savefig("freq_labels.png", bbox_inches='tight')
 
 	# Visualizes the correlations between labels as a heatmap
 	unique_labels = list(set(flattened))
@@ -144,16 +146,23 @@ def show_eda(mips):
 	normalized_corr = corr_matrix / diagonal
 	plt.figure(3, figsize=(14,10))
 	sns.heatmap(normalized_corr, annot=True)
+	plt.savefig("corr_heatmap.png", bbox_inches='tight')
 
 	# Plot degree distribution
 	# NEEDS WORK, FIX THE X-AXIS 
 	degrees = ([tup[-1] for tup in G.degree()])
 	plt.figure(4, figsize=(14, 10))
-	sns.countplot(degrees)
+	cp = sns.countplot(degrees)
+	for ind, label in enumerate(cp.get_xticklabels()):
+		if ind % 10 == 0:
+			label.set_visible(True)
+		else:
+			label.set_visible(False)
 	plt.title("Degree Histogram")
 	plt.ylabel("Count")
 	plt.xlabel("Degree")
-	plt.show()
+	plt.savefig("degree_distribution.png", bbox_inches='tight')
+	# plt.show()
 
 
 # IN PROGRESS: Clustering the DSD Matrix
@@ -253,11 +262,14 @@ if __name__ == '__main__':
 		end = time.time()
 		print("Numpy save of DSD took " + str (end-start) + " seconds.")
 	
-	delta = 1
-	rbf_matrix = np.exp(- dsd_A ** 2 / (2. * delta ** 2))
-	clusters = get_clusters(rbf_matrix)
-	np.save("cluster_list", clusters)
-	# print([len(c) for c in clusters])
+	# delta = 1
+	# rbf_matrix = np.exp(- dsd_A ** 2 / (2. * delta ** 2))
+	# clusters = get_clusters(rbf_matrix)
+	# np.save("cluster_list", clusters)
+
+	# print([len(c) for c in clusters]) # check lengths of clusters
+
+	show_eda(mips)
 
 	# test = np.zeros(dsd_A.shape[0])
 	# for cluster in clusters:
