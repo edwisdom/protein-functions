@@ -257,14 +257,7 @@ def predict_labels(clusters, mips_data, FDR): #untested
 				predicted_labels.append(key)
 		for protein in unlabeled_proteins:
 			mips_prediction[protein] = predicted_labels
-		
-				
-			
-
-
-	for label in clusters:
-		
-	return 4
+	return mips_prediction
 
 if __name__ == '__main__':
 	# Read in network and labels using the above functions
@@ -310,14 +303,12 @@ if __name__ == '__main__':
 	#cluster_array = np.zeros(dsd_A.shape[0], dtype=str)	no label = empty string
 	cluster_array = np.zeros(dsd_A.shape[0]) # no label = 0
 
-	#print(clusters)
 	for i in range(len(clusters)):
 		cluster_array[clusters[i]] = i + 1
 
-	#train, test = split_data(mips, .7)
+	train, test = split_data(mips, .7)
 	# predict_labels(clusters, train, .1)
 
-	clusters_with_labels = {}
 	for idx, node in enumerate(G.nodes):
 		print("Protein {}, index {}".format(node, idx))
 		try:
@@ -333,6 +324,17 @@ if __name__ == '__main__':
 
 	
 
+	print(clusters)
+	clusters_by_names = [list(np.array(G.nodes)[cluster]) for cluster in clusters]
+	print(clusters_by_names)
+
+	predicted_mips = predict_labels(clusters_by_names, train, .3)
+	print(predicted_mips)
+
+	evalMetrics = getEvalMetrics()
+	print(evalMetrics['jaccard_score'](mips,train))
+	print(evalMetrics['jaccard_score'](mips,predicted_mips))
+	
 	# print([len(c) for c in clusters]) # check lengths of clusters
 	
 	# test = np.zeros(dsd_A.shape[0])
@@ -364,6 +366,4 @@ if __name__ == '__main__':
 
 
 
-	# evalMetrics = getEvalMetrics()
-	# print(evalMetrics['jaccard_score'](mips,train))
 	
