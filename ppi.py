@@ -284,15 +284,23 @@ if __name__ == '__main__':
 	for i in range(len(clusters)):
 		cluster_array[clusters[i]] = i + 1
 
-	# train, test = split_data(mips, .7)
+	train, test = split_data(mips, .7)
 	# predict_labels(clusters, train)
 
 	for idx, node in enumerate(G.nodes):
 		print("Protein {}, index {}".format(node, idx))
 		try:
-			print("Protein {} is in cluster {} and has labels {}".format(node, cluster_array[idx], mips[node]))
+			if cluster_array[idx] > 0:
+				print("Protein {} is in cluster {} and has labels {}".format(node, cluster_array[idx]-1, mips[node]))
+			else:
+				print("Protein {} was not clustered, has labels {}".format(node, mips[node]))
 		except:
-			print("Protein {} is in cluster {} and we don't know its labels".format(node, cluster_array[idx]))
+			if cluster_array[idx] > 0:
+				print("Protein {} is in cluster {} and we don't know its labels".format(node, cluster_array[idx]-1))
+			else:
+				print("Protein {} was not clustered, and we don't know its labels".format(node))
+
+	
 
 	# print([len(c) for c in clusters]) # check lengths of clusters
 	
