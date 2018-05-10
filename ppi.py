@@ -193,6 +193,31 @@ def mipsToLabels(mips, unique_labels):
 		i+=1
 	return label_mat, key_index_map
 
+def spectralClustering(distance_matrix, number_of_clusters):
+	random_clusters = np.random.randint(0,number_of_clusters,distance_matrix.shape[0])
+	return random_clusters
+
+def get_clusters(distance_matrix, cluster_array):
+	number_of_clusters = 5
+	# could also use np.unique
+	cutoff_high = 500
+	cutoff_low = 100
+	clusters = spectralClustering(distance_matrix, number_of_clusters)
+	for i in range(number_of_clusters):
+		cluster = (clusters == i)
+		clust_idx = [idx for idx, x in enumerate(clusters) if x == i]
+		size_cluster = len(clust_idx)
+		print("There are {} nodes in cluster {}".format(size_cluster, i))
+		if size_cluster > cutoff_high:
+			to_recluster = distance_matrix[clust_idx,:][:,clust_idx]
+			get_clusters(to_recluster, cluster_array)
+		elif size_cluster < cutoff_low:
+			return cluster_array
+		else:
+			cluster_array.append(clust_idx)
+	return cluster_array
+
+
 if __name__ == '__main__':
 	# Read in network and labels using the above functions
 	G = read_network(NETWORK_DATA)
@@ -218,16 +243,13 @@ if __name__ == '__main__':
 		end = time.time()
 		print("Numpy save of DSD took " + str (end-start) + " seconds.")
 	
-	number_of_clusters = 5
-	random_clusters = np.random.randint(0,number_of_clusters,dsd_A.shape[0])
-	cutoff_size = 450
+	clusters = get_clusters(dsd_A, [])
 
-	for i in range(number_of_clusters):
-		num_clust = (random_clusters == i).sum()
-		print("There are {} clusters of size {}".format(num_clust, i))
-		if num_clust > cutoff_size:
-			clust_idx = [idx for idx, x in enumerate(random_clusters) if x == i]
-			for_subgraphing = dsd_A[clust_idx,:][:,clust_idx]
+	for cluster in clusters:
+		print(len(cluster))
+	
+
+	
 
 
 	# dsd_G = nx.from_numpy_matrix(dsd_A)
