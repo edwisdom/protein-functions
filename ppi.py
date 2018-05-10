@@ -251,17 +251,13 @@ if __name__ == '__main__':
 		end = time.time()
 		print("Numpy load of clusters took " + str (end-start) + " seconds.")
 	except:
-		dsd_A = calculator(A, 3)
-		print('6')
 		start = time.time()
-		np.save("dsd.npy", dsd_A)
+		delta = 1
+		rbf_matrix = np.exp(- dsd_A ** 2 / (2. * delta ** 2))
+		clusters = get_clusters(rbf_matrix)
+		np.save("cluster_list.npy", clusters)
 		end = time.time()
-		print("Numpy save of DSD took " + str (end-start) + " seconds.")
-	
-	# delta = 1
-	# rbf_matrix = np.exp(- dsd_A ** 2 / (2. * delta ** 2))
-	# clusters = get_clusters(rbf_matrix)
-	# np.save("cluster_list", clusters)
+		print("Numpy save of clusters took " + str (end-start) + " seconds.")
 
 	# print([len(c) for c in clusters]) # check lengths of clusters
 
@@ -274,15 +270,10 @@ if __name__ == '__main__':
 		print("Numpy load of DSD took " + str (end-start) + " seconds.")
 	except:
 		dsd_A = calculator(A, 3)
-		print('6')
 		start = time.time()
 		np.save("dsd.npy", dsd_A)
 		end = time.time()
 		print("Numpy save of DSD took " + str (end-start) + " seconds.")
-	delta = 1
-	rbf_matrix = np.exp(- dsd_A ** 2 / (2. * delta ** 2))
-	clusters = get_clusters(rbf_matrix)
-	np.save("cluster_list.npy", clusters)
 		
 	print(clusters)
 	# print([len(c) for c in clusters])
