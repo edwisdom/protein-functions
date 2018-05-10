@@ -233,8 +233,38 @@ def get_clusters(distance_matrix):
 	end = time.time()
 	return cluster_array
 
-def predict_labels(clusters, mips_data):
-	return 3
+def predict_labels(clusters, mips_data, FDR): #untested
+	mips_prediction = {}
+	for cluster in clusters:
+		cluster_size = len(cluster)
+		unlabeled_proteins = []
+		count_dict = {}
+		predicted_labels = []
+		for protein in cluster:
+			try:
+				labels = mips_data[protein]
+				mips_prediction[protein] = labels
+			except:
+				unlabeled_proteins.append(protein)
+				continue
+			for label in labels:
+				try:
+					count_dict[label] += 1
+				except:
+					count_dict[label] = 0
+		for key in count_dict.keys():
+			if count_dict[key]/cluster_size > FDR:
+				predicted_labels.append(key)
+		for protein in unlabeled_proteins:
+			mips_prediction[protein] = predicted_labels
+		
+				
+			
+
+
+	for label in clusters:
+		
+	return 4
 
 if __name__ == '__main__':
 	# Read in network and labels using the above functions
@@ -284,9 +314,10 @@ if __name__ == '__main__':
 	for i in range(len(clusters)):
 		cluster_array[clusters[i]] = i + 1
 
-	train, test = split_data(mips, .7)
-	# predict_labels(clusters, train)
+	#train, test = split_data(mips, .7)
+	# predict_labels(clusters, train, .1)
 
+	clusters_with_labels = {}
 	for idx, node in enumerate(G.nodes):
 		print("Protein {}, index {}".format(node, idx))
 		try:
