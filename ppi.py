@@ -202,7 +202,7 @@ def get_clusters(distance_matrix):
 	number_of_clusters = 5
 	# could also use np.unique
 	cutoff_high = 500
-	cutoff_low = 250
+	cutoff_low = 150
 	clusters = spectralClustering(distance_matrix, number_of_clusters)
 	for i in range(number_of_clusters):
 		cluster = np.array([idx for idx, x in enumerate(clusters) if x == i])
@@ -245,6 +245,7 @@ if __name__ == '__main__':
 		print("Numpy save of DSD took " + str (end-start) + " seconds.")
 	
 	clusters = get_clusters(dsd_A)
+	print([len(c) for c in clusters])
 
 	test = np.zeros(dsd_A.shape[0])
 	for cluster in clusters:
