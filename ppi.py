@@ -194,16 +194,21 @@ def mipsToLabels(mips, unique_labels):
 	return label_mat, key_index_map
 
 def spectralClustering(distance_matrix, number_of_clusters):
-	random_clusters = np.random.randint(0,number_of_clusters,distance_matrix.shape[0])
-	return random_clusters
+	sc = SpectralClustering(number_of_clusters, eigen_solver='arpack', n_init=10, affinity='precomputed', assign_labels='kmeans', n_jobs=-1)
+	sc.fit(distance_matrix)
+	# random_clusters = np.random.randint(0,number_of_clusters,distance_matrix.shape[0])
+	return sc.labels_
 
 def get_clusters(distance_matrix):
+	start = time.time()
 	cluster_array = []
-	number_of_clusters = 5
+	number_of_clusters = len(distance_matrix)//5
 	# could also use np.unique
-	cutoff_high = 500
-	cutoff_low = 150
+	cutoff_high = 100
+	cutoff_low = 3
 	clusters = spectralClustering(distance_matrix, number_of_clusters)
+	end = time.time()
+	print("A round of get_clusters took " + str(end-start) + " seconds.")
 	for i in range(number_of_clusters):
 		cluster = np.array([idx for idx, x in enumerate(clusters) if x == i])
 		size_cluster = len(cluster)
@@ -216,8 +221,12 @@ def get_clusters(distance_matrix):
 			continue
 		else:
 			cluster_array.append(cluster)
+	end = time.time()
 	return cluster_array
 
+def print_times(func, *args, name):
+	start = time.time()
+	func(*args)
 
 if __name__ == '__main__':
 	# Read in network and labels using the above functions
@@ -244,16 +253,19 @@ if __name__ == '__main__':
 		end = time.time()
 		print("Numpy save of DSD took " + str (end-start) + " seconds.")
 	
-	clusters = get_clusters(dsd_A)
-	print([len(c) for c in clusters])
+	delta = 1
+	rbf_matrix = np.exp(- dsd_A ** 2 / (2. * delta ** 2))
+	clusters = get_clusters(rbf_matrix)
+	np.save("cluster_list", clusters)
+	# print([len(c) for c in clusters])
 
-	test = np.zeros(dsd_A.shape[0])
-	for cluster in clusters:
-		test[cluster] += 1
+	# test = np.zeros(dsd_A.shape[0])
+	# for cluster in clusters:
+	# 	test[cluster] += 1
 	
-	print(sum(test))		# amount of representation
-	print(len(test))		# versus total (for dropout)
-	print(sum(test > 1)) 	# no overlapping clusters
+	# print(sum(test))		# amount of representation
+	# print(len(test))		# versus total (for dropout)
+	# print(sum(test > 1)) 	# no overlapping clusters
 
 	
 
@@ -263,20 +275,18 @@ if __name__ == '__main__':
 	# dsd_subgraph_l = nx.connected_component_subgraphs(dsd_G)
 	# print(gs)
 	# print("Number of nodes in graph: {}".format(len(dsd_G.nodes)))
+ 
 
-
+	# delta = 1
+	# rbf_A = np.exp(- dsd_A ** 2 / (2. * delta ** 2))
 	# start = time.time()
-	# sc = SpectralClustering(20, affinity='precomputed', assign_labels='kmeans', n_jobs=-1, n_init=2)
-	# sc.fit(dsd_A)
+	# sc = SpectralClustering(1000, eigen_solver='arpack', n_init=10, affinity='precomputed', assign_labels='kmeans', n_jobs=-1)
+	# sc.fit(rbf_A)
 	# end = time.time()
 	# print ("Spectral clustering took " + str(end-start) + " seconds.")
+	# np.save("sc_labels_1000-10.npy", sc.labels_)
 
 
-	# start = time.time()
-	# np.save("sc_labels.npy", sc.labels_)
-	# end = time.time()
-	# print ("Numpy save of clustering labels took " + str(end-start) + " seconds.")
-	
 	# train, test = split_data(mips, .7)
 
 	# evalMetrics = getEvalMetrics()

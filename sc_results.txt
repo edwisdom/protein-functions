@@ -1,0 +1,16 @@
+For k=20, affinity=precomputed, n_init=2:
+Spectral clustering took 346.99439668655396 seconds.
+
+After applying RBF kernel manually, same parameters, more CPU load:
+Spectral clustering took 471.2317113876343 seconds.
+
+When using affinity=rbf, graph not fully connected.
+
+For manual RBF (which seems to work best and will be assumed), k=100, n_init=2:
+Spectral clustering took 115.37326860427856 seconds.
+
+For k=1000:
+Spectral clustering took 145.65952229499817 seconds.
+
+For k=1000 and n_init=10:
+Spectral clustering took 301.0558168888092 seconds.
