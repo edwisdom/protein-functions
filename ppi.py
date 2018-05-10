@@ -233,10 +233,6 @@ def get_clusters(distance_matrix):
 	end = time.time()
 	return cluster_array
 
-def print_times(func, *args, name):
-	start = time.time()
-	func(*args)
-
 if __name__ == '__main__':
 	# Read in network and labels using the above functions
 	G = read_network(NETWORK_DATA)
@@ -251,9 +247,9 @@ if __name__ == '__main__':
 
 	try:
 		start = time.time()
-		dsd_A = np.load('dsd.npy')
+		clusters = np.load("cluster_list.npy")
 		end = time.time()
-		print("Numpy load of DSD took " + str (end-start) + " seconds.")
+		print("Numpy load of clusters took " + str (end-start) + " seconds.")
 	except:
 		dsd_A = calculator(A, 3)
 		print('6')
@@ -270,7 +266,27 @@ if __name__ == '__main__':
 	# print([len(c) for c in clusters]) # check lengths of clusters
 
 	show_eda(mips)
-
+	print("rebuilding cluster_list")
+	try:
+		start = time.time()
+		dsd_A = np.load('dsd.npy')
+		end = time.time()
+		print("Numpy load of DSD took " + str (end-start) + " seconds.")
+	except:
+		dsd_A = calculator(A, 3)
+		print('6')
+		start = time.time()
+		np.save("dsd.npy", dsd_A)
+		end = time.time()
+		print("Numpy save of DSD took " + str (end-start) + " seconds.")
+	delta = 1
+	rbf_matrix = np.exp(- dsd_A ** 2 / (2. * delta ** 2))
+	clusters = get_clusters(rbf_matrix)
+	np.save("cluster_list.npy", clusters)
+		
+	print(clusters)
+	# print([len(c) for c in clusters])
+	
 	# test = np.zeros(dsd_A.shape[0])
 	# for cluster in clusters:
 	# 	test[cluster] += 1
