@@ -197,24 +197,25 @@ def spectralClustering(distance_matrix, number_of_clusters):
 	random_clusters = np.random.randint(0,number_of_clusters,distance_matrix.shape[0])
 	return random_clusters
 
-def get_clusters(distance_matrix, cluster_array):
+def get_clusters(distance_matrix):
+	cluster_array = []
 	number_of_clusters = 5
 	# could also use np.unique
 	cutoff_high = 500
-	cutoff_low = 100
+	cutoff_low = 250
 	clusters = spectralClustering(distance_matrix, number_of_clusters)
 	for i in range(number_of_clusters):
-		cluster = (clusters == i)
-		clust_idx = [idx for idx, x in enumerate(clusters) if x == i]
-		size_cluster = len(clust_idx)
+		cluster = np.array([idx for idx, x in enumerate(clusters) if x == i])
+		size_cluster = len(cluster)
 		print("There are {} nodes in cluster {}".format(size_cluster, i))
 		if size_cluster > cutoff_high:
-			to_recluster = distance_matrix[clust_idx,:][:,clust_idx]
-			get_clusters(to_recluster, cluster_array)
+			to_recluster = distance_matrix[cluster,:][:,cluster]
+			for sub_cluster in get_clusters(to_recluster):
+				cluster_array.append(cluster[sub_cluster])
 		elif size_cluster < cutoff_low:
-			return cluster_array
+			continue
 		else:
-			cluster_array.append(clust_idx)
+			cluster_array.append(cluster)
 	return cluster_array
 
 
@@ -243,11 +244,15 @@ if __name__ == '__main__':
 		end = time.time()
 		print("Numpy save of DSD took " + str (end-start) + " seconds.")
 	
-	clusters = get_clusters(dsd_A, [])
+	clusters = get_clusters(dsd_A)
 
+	test = np.zeros(dsd_A.shape[0])
 	for cluster in clusters:
-		print(len(cluster))
+		test[cluster] += 1
 	
+	print(sum(test))		# amount of representation
+	print(len(test))		# versus total (for dropout)
+	print(sum(test > 1)) 	# no overlapping clusters
 
 	
 
