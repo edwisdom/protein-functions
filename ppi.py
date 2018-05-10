@@ -233,6 +233,9 @@ def get_clusters(distance_matrix):
 	end = time.time()
 	return cluster_array
 
+def predict_labels(clusters, mips_data):
+	return 3
+
 if __name__ == '__main__':
 	# Read in network and labels using the above functions
 	G = read_network(NETWORK_DATA)
@@ -251,6 +254,7 @@ if __name__ == '__main__':
 		end = time.time()
 		print("Numpy load of clusters took " + str (end-start) + " seconds.")
 	except:
+		print("rebuilding cluster_list")
 		start = time.time()
 		delta = 1
 		rbf_matrix = np.exp(- dsd_A ** 2 / (2. * delta ** 2))
@@ -259,10 +263,8 @@ if __name__ == '__main__':
 		end = time.time()
 		print("Numpy save of clusters took " + str (end-start) + " seconds.")
 
-	# print([len(c) for c in clusters]) # check lengths of clusters
 
-	show_eda(mips)
-	print("rebuilding cluster_list")
+#	show_eda(mips)
 	try:
 		start = time.time()
 		dsd_A = np.load('dsd.npy')
@@ -275,8 +277,24 @@ if __name__ == '__main__':
 		end = time.time()
 		print("Numpy save of DSD took " + str (end-start) + " seconds.")
 		
-	print(clusters)
-	# print([len(c) for c in clusters])
+	#cluster_array = np.zeros(dsd_A.shape[0], dtype=str)	no label = empty string
+	cluster_array = np.zeros(dsd_A.shape[0]) # no label = 0
+
+	#print(clusters)
+	for i in range(len(clusters)):
+		cluster_array[clusters[i]] = i + 1
+
+	# train, test = split_data(mips, .7)
+	# predict_labels(clusters, train)
+
+	for idx, node in enumerate(G.nodes):
+		print("Protein {}, index {}".format(node, idx))
+		try:
+			print("Protein {} is in cluster {} and has labels {}".format(node, cluster_array[idx], mips[node]))
+		except:
+			print("Protein {} is in cluster {} and we don't know its labels".format(node, cluster_array[idx]))
+
+	# print([len(c) for c in clusters]) # check lengths of clusters
 	
 	# test = np.zeros(dsd_A.shape[0])
 	# for cluster in clusters:
@@ -306,7 +324,6 @@ if __name__ == '__main__':
 	# np.save("sc_labels_1000-10.npy", sc.labels_)
 
 
-	# train, test = split_data(mips, .7)
 
 	# evalMetrics = getEvalMetrics()
 	# print(evalMetrics['jaccard_score'](mips,train))
