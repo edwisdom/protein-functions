@@ -142,28 +142,37 @@ Then, in each cluster, we simply look at the frequencies of labels that we know 
 
 ## Evaluation
 
+We report an average of metrics run on a training/test split of 0.7/0.3. 
 
-### Other Things I Learned That Don't Deserve a Whole Section 
+|     Metric     |     Value     |
+|:--------------:|:-------------:|
+|   Rand Index   |   0.854       | 
+| Precision      |   0.207       |
+| Recall         |   0.053       |
+| F1 Measure     |   0.158       |
+| Jaccard Index  |   0.044       |
+| Hamming Loss   |   0.146       |
 
-- Learning Rate Optimizers: For my data and model, Adam vastly outperformed both Adadelta, Adagrad, and RMSProp. I include a more thorough comparison of the optimizers below, from Suki Lau on Towards Data Science.
+The Hamming loss metric, commonly used for multi-label classification problems, shows us that we get labels wrong approximately *15% of the time*. This is reasonable, although our F1 measure of 0.158 pales in comparison to the top submissions for [previous protein function prediction competitions](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5015320/), which score over 0.3.
 
-![alt text](https://cdn-images-1.medium.com/max/800/1*OjcTfMw6dmOmP4lRE7Ud-A.jpeg)
+We believe this is likely because we have yet to tune important parameters of our model, which we will discuss in the next section. 
 
-- Alternative Embeddings: All the figures I present here use the GloVe vectors, but I also tried to use pre-trained FastText vectors of the same size (300D), and the network performed comparably. 
 
 ## Future Work
 
-Here are some things that I did not get to tune that would make for interesting results:
+Here are some parameters that we did not get to tune that would make for interesting results:
 
-1. Using only max-pooling layers vs. using only average-pooling layers vs. using both
-2. Initializing different learning rates and setting a decay rate
-3. Different activation functions -- Tanh vs. PreLu vs. ReLu
-4. More convolutional layers with larger window sizes to capture long-distance connections
-5. Preprocessing comments using NLP techniques such as lemmatization, removing stop words, etc.
+1. Changing the number of clusters (k): Currently, we divide the number of nodes by 5 to determine the number of clusters, though this may be too many clusters for scikit-learn, which "works well for a small number of clusters" according to [the documentation](http://scikit-learn.org/stable/modules/clustering.html).
+2. Using different values of delta for the RBF kernel: We default to using delta=1, however, modifying this kernel parameter could significantly improve results. [Prior work with SVMs](https://arxiv.org/pdf/1507.06020.pdf) has shown that performance can be very sensitive to choice of this parameter. 
+3. Number of runs through K-means algorithm: According to scikit-learn, the k-means algorithm can produce noisy clusters, so we run it with 10 different centroid seeds and output the best clustering in terms of inertia. However, it may be necessary to increase the number of runs through k-means to produce a better clustering.
+4. Using second- and third-class MIPS labels: Once we can tune these model parameters, it may be informative to try to classify second and third-level protein labels to see how increasing the number of possible clusters impacts performance. 
 
 ## Credits
 
-I would like to thank Prof. Liping Liu, Daniel Dinjian, and Nathan Watts for thinking through problems with me and helping me learn the relevant technologies faster. 
+We would like to thank Prof. Liping Liu, Prof. Lenore Cowen, and Nathan Watts for helping us think through our architecture and working through knotty technical problems with us.
 
-I got the data for this model from a [Kaggle competition](https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge), and I was helped greatly by [this exploratory data analysis by Jagan Gupta](https://www.kaggle.com/jagangupta/stop-the-s-toxic-comments-eda).
+### Section Breakdown
 
+**Edwin**: Organized the README, wrote functions to read in and organize the data, made plots for exploratory data analysis, created evaluation metrics, and figured out how to deal with scikit-learn's spectral clustering. 
+
+**Daniel**: Wrote the function that recursively performs spectral clustering, implemented the label prediction from these clusters, computed the necessary values to perform evaluation, helped figure out spectral clustering, and cleaned up EDA and un-modular code. 

@@ -360,7 +360,7 @@ if __name__ == '__main__':
 
 
 	### Predict 
-	train, test = split_data(mips, .7)
+	train, test = split_data(mips, 0.7)
 
 	clusters_by_names = [list(np.array(G.nodes)[cluster]) for cluster in clusters]
 
