@@ -22,6 +22,7 @@ MIPS3 = "mips3.txt" # Third-level labels
 
 # Reads in edges line-by-line from a text file and returns a graph 
 def read_network(filename):
+	unique_proteins = []
 	G = nx.Graph()
 	with open(filename, 'r') as f:
 		for line in f:
@@ -52,16 +53,6 @@ def split_data(mips, split):
 			test[line] = mips[line]
 		else:
 			train[line] = mips[line]
-		# try:
-		# 	print(node, graph.node[node]['labels'])
-		# 	if np.random.rand() > .7:
-		# 		graph.node[node]['purpose'] = "validation"
-		# 	else:
-		# 		graph.node[node]['purpose'] = "train"
-		# except:
-		# 	print(node, " does not have any labels")
-		# 	graph.node[node]['purpose'] = "test"
-		# print("\tNode is for purpose:", graph.node[node]['purpose'])
 	return (train, test)
 
 def calculator(adjacency, nRw):
@@ -104,7 +95,9 @@ def show_basic_attributes(G):
 	for i in mips.values():
 		total_labels += len(i)
 	print ("We have labels for " + str(len(mips.keys())) + " proteins.")
-	print ("There are " + str(total_labels) + " total labels.") 
+	print ("There are " + str(total_labels) + " total labels.")
+	print("There are {} unique labels".format(len(unique_labels)))
+
 
 
 # Conducts a small exploratory data analysis on the network
@@ -165,11 +158,6 @@ def show_eda(mips):
 	# plt.show()
 
 
-# IN PROGRESS: Clustering the DSD Matrix
-# A = nx.adjacency_matrix(G).toarray()
-# dsd_A = calculator(A, 3)
-# gt_dict = nx.get_node_attributes(G, 'labels')
-# sc = SpectralClustering(1000`, affinity='rbf', assign_labels='kmeans', n_jobs=-1)
 
 def get_eval_metrics():
 	d = {}
@@ -312,16 +300,15 @@ def predict_labels(clusters, mips_data, FDR): #untested
 	return mips_prediction
 
 if __name__ == '__main__':
-	# Read in network and labels using the above functions
 	G = read_network(NETWORK_DATA)
-	print("Number of connected components: {}".format(nx.number_connected_components(G)))
-	print("Number of nodes in graph: {}".format(len(G.nodes)))
 	mips, unique_labels = read_labels(MIPS1)
-	# show_basic_attributes(G)
-	# show_eda(mips)
+	show_basic_attributes(G)
+	show_eda(mips)
 
 	nx.set_node_attributes(G, mips, 'labels')
-	A = nx.adjacency_matrix(G).toarray()
+
+
+	### Load Data
 
 	try:
 		start = time.time()
@@ -338,50 +325,46 @@ if __name__ == '__main__':
 		end = time.time()
 		print("Numpy save of clusters took " + str (end-start) + " seconds.")
 
-
-#	show_eda(mips)
 	try:
 		start = time.time()
 		dsd_A = np.load('dsd.npy')
 		end = time.time()
 		print("Numpy load of DSD took " + str (end-start) + " seconds.")
 	except:
-		dsd_A = calculator(A, 3)
+		print("rebuilding DSD")
 		start = time.time()
+		A = nx.adjacency_matrix(G).toarray()
+		dsd_A = calculator(A, 3)
 		np.save("dsd.npy", dsd_A)
 		end = time.time()
 		print("Numpy save of DSD took " + str (end-start) + " seconds.")
 		
-	#cluster_array = np.zeros(dsd_A.shape[0], dtype=str)	no label = empty string
+	# Convert clusters of indices into array of cluster labels
 	cluster_array = np.zeros(dsd_A.shape[0]) # no label = 0
-
 	for i in range(len(clusters)):
 		cluster_array[clusters[i]] = i + 1
 
+	### Print Cluster Results
+	# for idx, node in enumerate(G.nodes):
+	# 	print("Protein {}, index {}".format(node, idx))
+	# 	try:
+	# 		if cluster_array[idx] > 0:
+	# 			print("Protein {} is in cluster {} and has labels {}".format(node, cluster_array[idx]-1, mips[node]))
+	# 		else:
+	# 			print("Protein {} was not clustered, has labels {}".format(node, mips[node]))
+	# 	except:
+	# 		if cluster_array[idx] > 0:
+	# 			print("Protein {} is in cluster {} and we don't know its labels".format(node, cluster_array[idx]-1))
+	# 		else:
+	# 			print("Protein {} was not clustered, and we don't know its labels".format(node))
+
+
+	### Predict 
 	train, test = split_data(mips, .7)
-	# predict_labels(clusters, train, .1)
 
-	for idx, node in enumerate(G.nodes):
-		print("Protein {}, index {}".format(node, idx))
-		try:
-			if cluster_array[idx] > 0:
-				print("Protein {} is in cluster {} and has labels {}".format(node, cluster_array[idx]-1, mips[node]))
-			else:
-				print("Protein {} was not clustered, has labels {}".format(node, mips[node]))
-		except:
-			if cluster_array[idx] > 0:
-				print("Protein {} is in cluster {} and we don't know its labels".format(node, cluster_array[idx]-1))
-			else:
-				print("Protein {} was not clustered, and we don't know its labels".format(node))
-
-	
-
-	print(clusters)
 	clusters_by_names = [list(np.array(G.nodes)[cluster]) for cluster in clusters]
-	print(clusters_by_names)
 
 	predicted_mips = predict_labels(clusters_by_names, train, .1)
-	print(predicted_mips)
 
 	metrics = get_eval_metrics()
 	scores = compute_score(test, predicted_mips, len(unique_labels))
@@ -392,40 +375,14 @@ if __name__ == '__main__':
 	for m in metrics.keys():
 		print(m + " = " + str(metrics[m](tp,tn,fp,fn)))
 
-	# evalMetrics = getEvalMetrics()
 
-	# print(evalMetrics['jaccard_score'](mips,train))
-	# print(evalMetrics['jaccard_score'](test,predicted_mips))
+	### Basic Clustering Metrics
+	# test = np.zeros(dsd_A.shape[0])
+	# for cluster in clusters:
+	# 	test[cluster] += 1
 	
-	# print([len(c) for c in clusters]) # check lengths of clusters
-	
-	test = np.zeros(dsd_A.shape[0])
-	for cluster in clusters:
-		test[cluster] += 1
-	
-	print(sum(test))		# amount of representation
-	print(len(test))		# versus total (for dropout)
-	print(sum(test > 1)) 	# no overlapping clusters
-
-	
-
-
-	# dsd_G = nx.from_numpy_matrix(dsd_A)
-	# print("Number of connected components: {}".format(nx.number_connected_components(dsd_G)))
-	# dsd_subgraph_l = nx.connected_component_subgraphs(dsd_G)
-	# print(gs)
-	# print("Number of nodes in graph: {}".format(len(dsd_G.nodes)))
- 
-
-	# delta = 1
-	# rbf_A = np.exp(- dsd_A ** 2 / (2. * delta ** 2))
-	# start = time.time()
-	# sc = SpectralClustering(1000, eigen_solver='arpack', n_init=10, affinity='precomputed', assign_labels='kmeans', n_jobs=-1)
-	# sc.fit(rbf_A)
-	# end = time.time()
-	# print ("Spectral clustering took " + str(end-start) + " seconds.")
-	# np.save("sc_labels_1000-10.npy", sc.labels_)
-
-
+	# print(sum(test))		# amount of representation
+	# print(len(test))		# versus total (for dropout)
+	# print(sum(test > 1)) 	# no overlapping clusters
 
 	
