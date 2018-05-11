@@ -171,12 +171,17 @@ def show_eda(mips):
 # gt_dict = nx.get_node_attributes(G, 'labels')
 # sc = SpectralClustering(1000`, affinity='rbf', assign_labels='kmeans', n_jobs=-1)
 
-def getEvalMetrics():
+def get_eval_metrics():
 	d = {}
-	d['jaccard_score'] = compute_jaccard_score
+	d['jaccard_index='] = jaccard_index
+	d['rand_index'] = rand_index
+	d['precision'] = precision
+	d['recall'] = recall
+	d['f1_measure'] = f1_measure
+	d['hamming_loss'] = hamming_loss
 	return d
 
-def compute_jaccard_score(y_true, y_pred, num_unique_labels, normalize=True, sample_weight=None):
+def compute_score(y_true, y_pred, num_unique_labels, normalize=True, sample_weight=None):
 	avg_accuracy = 0
 	true_pos_agg = 0
 	true_neg_agg = 0
@@ -217,6 +222,26 @@ def compute_jaccard_score(y_true, y_pred, num_unique_labels, normalize=True, sam
 		avg_accuracy += jac_sim
 		#avg_accuracy += metrics.jaccard_similarity_score(labels, predictions, normalize, sample_weight)
 	return true_pos_agg, true_neg_agg, false_pos_agg, false_neg_agg#avg_accuracy/len(y_true)
+
+def precision(true_pos, true_neg, false_pos, false_neg):
+	return true_pos/(true_pos + false_pos)
+
+def recall(true_pos, true_neg, false_pos, false_neg):
+	return true_pos/(true_pos + false_neg)
+
+def rand_index(true_pos, true_neg, false_pos, false_neg):
+	return (true_pos + true_neg) / (true_pos + true_neg + false_pos + false_neg)
+
+def f1_measure(true_pos, true_neg, false_pos, false_neg):
+	p = precision(true_pos, true_neg, false_pos, false_neg) 
+	r = recall(true_pos, true_neg, false_pos, false_neg)
+	return (2*p*r)/p+r
+
+def jaccard_index(true_pos, true_neg, false_pos, false_neg):
+	return true_pos/(true_pos+false_pos+false_neg)
+
+def hamming_loss(true_pos, true_neg, false_pos, false_neg):
+	return (false_pos+false_neg)/(true_pos+true_neg+false_pos+false_neg)
 
 def mipsToLabels(mips, unique_labels):
 	i = 0
@@ -358,8 +383,14 @@ if __name__ == '__main__':
 	predicted_mips = predict_labels(clusters_by_names, train, .1)
 	print(predicted_mips)
 
-	print(compute_jaccard_score(mips, train, len(unique_labels)))
-	print(compute_jaccard_score(test, predicted_mips, len(unique_labels)))
+	metrics = get_eval_metrics()
+	scores = compute_score(test, predicted_mips, len(unique_labels))
+	print ("Raw scores on test data are " + str(scores))
+	print("Raw scores on train data are " + str(compute_score(mips, train, len(unique_labels))))
+
+	tp,tn,fp,fn = scores
+	for m in metrics.keys():
+		print(m + " = " + str(metrics[m](tp,tn,fp,fn)))
 
 	# evalMetrics = getEvalMetrics()
 
