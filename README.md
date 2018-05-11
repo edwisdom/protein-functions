@@ -99,98 +99,49 @@ The PPI network is [scale-free](http://rakaposhi.eas.asu.edu/cse494/scalefree.pd
 
 ## Model
 
-Here, I will outline some of the major model parameters that I iteratively tweaked, along with the effect on the model's accuracy rate.
+Here, we outline the major components of the model. 
 
-### Baseline Model
+### Diffusion-State Distance (DSD)
 
-I began with a simple model:
-- Embedding layer with an input of pre-trained 50-dimensional vectors (GloVe 6B.50D)
-- Bidirectional LSTM of size 50, with dropout 0.1
-- Pooling layer (average + max concatenated)
-- FC layer of size 25, with dropout 0.1
-- Output FC layer of size 6 (one per class)
+The work on a diffusion-based distance metric comes from Tufts' Bioinformatics and Computational Biology Research Group. Because the average shortest path is low across the network due to its degree distribution, the DSD uses random walks in order to normalize the pairwise distances between vertices. The key insight is that paths through high-degree nodes should be valued less -- for example, two people liking Beyonce does not mean they are in close social circles. For a more in-depth discussion of the metric, see [the original paper](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0076339).  
 
-I used a batch size of 32 and the Adam optimizer, which is an alternative to stochastic gradient descent. Each parameter of the network has a separate learning rate, which are continually adapted as the network learns. For more on the Adam optimizer, read [here](https://machinelearningmastery.com/adam-optimization-algorithm-for-deep-learning/). 
+<figure>
+    <img src='https://github.com/edwisdom/protein-functions/blob/master/shortest_paths.png'/>
+    <font size="2">
+    <figcaption> Figure 3: Distribution of shortest path distances in the yeast PPI network 
+    </figcaption>
+    </font>
+</figure>
 
-**Keras Output:**
+<figure>
+    <img src='https://github.com/edwisdom/protein-functions/blob/master/dsd_paths.png' />
+    <font size="2">
+    <figcaption> Figure 4: Distribution of DSD distances in the yeast PPI network
+    </figcaption>
+    </font>
+</figure>
 
-```
-loss: 0.0447 - acc: 0.9832 - val_loss: 0.0472 - val_acc: 0.9824
-```
 
-The model had trained for 2 epochs. This output from Keras shows loss and accuracy on the training data used, and the 10% held out for cross-validation. Since the out-of-sample predictions best indicate how well the model generalizes, the val_loss and val_acc will be the measures that I report for future model iterations.
+### Gaussian Kernel
 
-### Batch Size / Epochs
+In order to convert the resulting distance matrix from the DSD into an affinity matrix, we use the standard Gaussian RBF kernel. This gives us a matrix of size |V²|, with each entry aᵢⱼ corresponding to the similarity between vertices vᵢ and vⱼ. 
 
-First, I recognized that I could train for multiple epochs. The network eventually overfits if we add too many epochs, so first, we can add a callback to stop early. In this code, if val_loss doesn't improve after 3 epochs, the model stops training. 
 
 ```python
-es = EarlyStopping(monitor='val_loss',
-                   min_delta=0,
-                   patience=3,
-                   verbose=0, mode='auto')
+    delta = 1
+    rbf_matrix = np.exp(- dsd_A ** 2 / (2. * delta ** 2))
 ```
 
-Moreover, we can save the best model with the following callback:
 
-```python
-best_model = 'models/model_filename.h5'
-checkpoint = ModelCheckpoint(best_model, 
-                             monitor='val_loss', 
-                             verbose=0, 
-                             save_best_only=True, mode='auto')
-model.fit(X_t, y, batch_size=batch_size, epochs=epochs, callbacks=[es, checkpoint], validation_split=0.1)
-```
+### Spectral Clustering
 
-Second, I migrated the network to my GPU by downloading CUDA and Tensorflow-GPU. This allowed me to change the batch size to 1024 and train my network much faster.
+Once we get an affinity matrix, we use spectral clustering from scikit-learn to create a low-dimensional embedding, on which we apply the k-means algorithm to produce clusters. More specifically, we recursively use spectral clustering on groups of size > 100, and throw out any clusters with less than 3 nodes. 
 
-**Loss: 0.0454, Accuracy: 0.9832**
-
-### Dropout 
-
-I wanted to check if I could tune the model's performance by increasing dropout before experimenting with the network's architecture. Almost all of these efforts, done alone, actually lowered the model accuracy.
-
-- Embedding Layer Dropout to 0.2 -- Loss: 0.0469, Accuracy: 0.9827
-- Final Layer Dropout to 0.3 -- Loss: 0.0482, Accuracy: 0.9831
-- LSTM Dropout to 0.3 -- Loss: 0.0473, Accuracy: 0.9827
-- Recurrent Dropout to 0.3 -- Loss: 0.0465, Accuracy: 0.9831
-
-These results make some sense in hindsight, since the network size is relatively small. As [this paper found](https://pdfs.semanticscholar.org/3061/db5aab0b3f6070ea0f19f8e76470e44aefa5.pdf), applying dropout in the middle and after LSTM layers tends to worsen performance. This, of course, didn't explain why increasing dropout in the embedding layer (which comes before the LSTM) worsened performance.
-
-As I found in this [paper on CNNs](https://arxiv.org/pdf/1411.4280.pdf), dropping random weights doesn't actually help when there is spatial correlation in the feature maps. Since natural language also exhibits spatial/sequential correlation, spatial dropout would be a much better choice, since it drops out entire feature maps. After adding a spatial dropout of 0.2 before the LSTM layer, the network finally improved.
-
-**Loss: 0.0452, Accuracy: 0.9834**
-
-### Architecture
-
-First, I experimented with a different RNN cell. I simply reconstructed the previous network's architecture, but replaced LSTM cells with GRU cells. GRU layers only have two gates, a reset and update gate -- whereas the update gate encodes the previous inputs ("memory"), the reset gate combines the input with this memory. 
-
-Whereas the LSTM can capture long-distance connections due to its hidden state, this may not be necessary for identifying toxicity, since a comment is likely to be toxic throughout. For more on the difference between GRUs and LSTMs, read [here](http://www.wildml.com/2015/10/recurrent-neural-network-tutorial-part-4-implementing-a-grulstm-rnn-with-python-and-theano/). For an evaluation of the two on NLP tasks, see [this paper](https://arxiv.org/pdf/1412.3555v1.pdf). 
-
-Surprisingly, the GRU performed comparably to the LSTM without any further tuning.
-
-**Loss: 0.0450, Accuracy: 0.9832**
-
-Second, I used larger pre-trained embedding vectors (from 50 dimensions to 300). Furthermore, I increased the number of words that the model was using for each comment in increments of 50, going up from 100 originally to 300 once model performance stopped improving. This simple change improved performance significantly for the LSTM.
-
-**Loss: 0.0432, Accuracy: 0.09838**
-
-Third, and perhaps most importantly, I added a convolutional layer of size 64, with a window size of 3, in between the recurrent and FC layers for both the LSTM and GRU network. Although I found RCNNs rather late in my model iteration process, I've explained them above in the [Background Research section](https://github.com/edwisdom/toxic-comments#recurrent-convolutional-neural-networks).
-
-**LSTM - Loss: 0.0412, Accuracy: 0.9842**
-
-**GRU  - Loss: 0.0414, Accuracy: 0.9842**
-
-Finally, I decided to stack another convolutional layer of size 64, with window size 6, before the FC layer for both networks. I also tried to add a FC layer of size 64 before the output layer. Both of these slightly improved the model, although the GRU benefitted more from the additional convolution, whereas the LSTM benefitted more from the added FC layer.
+Then, in each cluster, we simply look at the frequencies of labels that we know from our training data. If those frequencies are above a certain threshold, then we predict that label for all of the nodes in that cluster. 
 
 
-| Loss By Model | CNN Layer | FC Layer |
-|:-------------:|:---------:|:--------:|
-| GRU           | 0.0406    | 0.0408   |
-| LSTM          | 0.0411    | 0.0402   |
+## Evaluation
 
-
-Ensembled together, the two best-performing networks here reach **98.48% accuracy**.
 
 ### Other Things I Learned That Don't Deserve a Whole Section 
 
