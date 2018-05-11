@@ -38,7 +38,9 @@ In the past few years, sequencing technology has given us data on a number of or
 
 ![alt text][known_funcs]
 
-[known_funcs]: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1847944/bin/msb4100129-f1.jpg "Figure 1: Percentage of annotated vs. unannotated proteins by species, from Sharan, Ulitsky, and Shamir"
+[known_funcs]: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1847944/bin/msb4100129-f1.jpg 
+
+.center[Figure 1: Percentage of annotated vs. unannotated proteins by species, from Sharan, Ulitsky, and Shamir]
 
 ![alt text][dist_corr]
 
