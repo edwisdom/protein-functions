@@ -32,15 +32,19 @@ python ppi.py
 
 This section covers some of our basic research in protein interaction networks and graph-based clustering methods.
 
-### Protein Interaction Networks
+### Protein-Protein Interaction Networks
 
-Recurrent neural networks (RNNs) have been shown to produce astonishing results in text generation, sentiment classification, and even part-of-speech tagging, despite their seemingly simple architecture. RNNs are more powerful than regular/vanilla neural networks because they combine an input vector with a *hidden state vector* before outputting a vector, allowing us to encode the sequence of inputs over time that the network has already seen -- for our NLP application, this will be a sequence of words (encoded as vectors), though you can see an example with a sequence of characters below. 
+In the past few years, sequencing technology has given us data on a number of organisms' genome. However, interpreting this data requires understanding protein function, and experimental annotation simply cannot keep up (see figure 1). Therefore, protein-protein interaction networks have become increasingly important in predicting function, since network distance highly correlates with functional similarity (see figure 2).
 
-![alt text][rnn]
+![alt text][known_funcs]
 
-[rnn]: https://karpathy.github.io/assets/rnn/charseq.jpeg "An example RNN with 4-dimensional input and output layers, and a hidden layer of 3 units (neurons). This diagram shows the activations in the forward pass when the RNN is fed the characters 'hell' as input. The output layer contains confidences the RNN assigns for the next character (vocabulary is h,e,l,o); We want the green numbers to be high and red numbers to be low."
+[known_funcs]: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1847944/bin/msb4100129-f1.jpg "Figure 1: Percentage of annotated vs. unannotated proteins by species, from Sharan, Ulitsky, and Shamir"
 
-For more on RNNs, read:
+![alt text][dist_corr]
+
+[dist_corr]: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1847944/bin/msb4100129-f3.jpg "Figure 2: Correlation between protein functional similarity and network distance, also from Sharan, Ulitsky, and Shamir"
+
+For more on PPI networks, read:
 - [The Unreasonable Effectiveness of RNNs](https://karpathy.github.io/2015/05/21/rnn-effectiveness/)
 - [A Beginner's Guide to RNNs](https://deeplearning4j.org/lstm.html)
 - [Comparative Study of CNN and RNN for NLP](https://arxiv.org/pdf/1702.01923.pdf)

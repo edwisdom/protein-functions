@@ -328,7 +328,7 @@ if __name__ == '__main__':
 	clusters_by_names = [list(np.array(G.nodes)[cluster]) for cluster in clusters]
 	print(clusters_by_names)
 
-	predicted_mips = predict_labels(clusters_by_names, train, .3)
+	predicted_mips = predict_labels(clusters_by_names, train, .5)
 	print(predicted_mips)
 
 	evalMetrics = getEvalMetrics()
