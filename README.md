@@ -37,7 +37,7 @@ This section covers some of our basic research in protein interaction networks a
 In the past few years, sequencing technology has given us data on a number of organisms' genome. However, interpreting this data requires understanding protein function, and experimental annotation simply cannot keep up (see Figure 1). Therefore, protein-protein interaction networks have become increasingly important in predicting function, since network distance highly correlates with functional similarity (see Figure 2).
 
 <figure>
-    <img src='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1847944/bin/msb4100129-f1.jpg' width="800"/>
+    <img src='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1847944/bin/msb4100129-f1.jpg' width="600"/>
     <font size="2">
     <figcaption> Figure 1: Percentage of annotated vs. unannotated proteins by species, from Sharan, Ulitsky, and Shamir 
     </figcaption>
@@ -53,6 +53,7 @@ In the past few years, sequencing technology has given us data on a number of or
 </figure>
 
 
+\
 For more on PPI networks, read:
 - [Introduction to Protein Function Prediction for Computer Scientists](http://biofunctionprediction.org/cafa-targets/Introduction_to_protein_prediction.pdf)
 - [Network-Based Prediction of Protein Function ](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1847944/)
@@ -60,94 +61,41 @@ For more on PPI networks, read:
 
 ### Graph-Based Clustering
 
-In [this paper from 2015](http://www.deeplearningitalia.com/wp-content/uploads/2017/12/Dropbox_Recurrent-Convolutional-Neural-Networks-for-Text-Classification.pdf), the authors find that adding a convolutional layer to an RNN outperforms CNNs and RNNs alone for text classification tasks. The authors argue that while the recurrent part captures long-distance connections between the data (e.g. the beginning and end of sentence), the convolutional part captures phrase-level patterns. By adding a max-pooling layer afterward, a CNN can identify the most important words or phrases.
+In machine learning terms, this problem boils down to a graph-based semi-supervised multi-class classification problem. This has often been approached with clustering, and spectral clustering in particular. Spectral graph theory, an [active field of interest](https://arxiv.org/pdf/1609.08072.pdf), fundamentally involves constructing a Laplacian matrix, finding its eigenvalues, and relating those to some properties of the graph. 
 
-Although the authors don't include any discussion of a stacked CNN (with both small and large window sizes in order to capture both short- and long-distance patterns), other researchers have similarly found RCNNs to be more accurate for a number of classification tasks:
 
-- [Scene Labeling](http://proceedings.mlr.press/v32/pinheiro14.pdf)
-- [Object Recognition](https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Liang_Recurrent_Convolutional_Neural_2015_CVPR_paper.pdf)
-- [Video Classification](http://ieeexplore.ieee.org/document/7552971/)
+- [A Tutorial on Spectral Clustering](https://arxiv.org/pdf/0711.0189.pdf)
+- [Graph-Based Semi-Supervised Learning Methods](http://www.cs.cmu.edu/afs/cs/Web/People/frank/papers/thesis.pdf)
+- [Survey of Graph Clustering Algorithms](http://snap.stanford.edu/class/cs224w-2014/projects2014/cs224w-21-final.pdf)
 
 ## Data
 
-The data here consists of over 150,000 sentences from Wikipedia's talk page comments. The comments have been labeled by human moderators as toxic, severely toxic, obscene, hateful, insulting, and/or threatening. For more information about how the dataset was collected, see [the original paper](https://arxiv.org/pdf/1610.08914.pdf).
+The data here consists of over 5,000 proteins, over 60,000 edges (thereby making a sparse graph), and over 4,000 label instances. The edges between the proteins represent physical contact, and the labels represent known experimental functional annotations. For more information about the dataset, especially the biological meaning of the functional annotations, see [Tufts University Professor Lenore Cowen's website](http://dsd.cs.tufts.edu/).
 
-### Class Imbalances
+### Label Imbalances
 
-Note that there are a lot more "clean" comments (marked as 0 for all 6 classes of toxicity) than there are toxic. Moreover, "toxic" is by far the most common label. These class imbalances mean that we should be wary of methods like logistic regression, which would favor the majority class. Since we want to detect toxic online comments, misclassifying most comments as clean would defeat the purpose, even though it might improve model accuracy. Read [here](http://www.chioka.in/class-imbalance-problem/) for more on the class imbalance problem.
+Note that out of the 18 labels, some functional annotations (01, 42) are much more common than others (38, 41). This class imbalance can often bias clustering or classification algorithms towards the majority or plurality class. Unlike cases where we want to detect anomalies like negative sentiment in NLP or cancerous cells in image classification, in this application, the problem is less acute because the detection of some labels isn't inherently more valuable. For more on the class-imbalance problem, see [this paper](https://link.springer.com/article/10.1007/s13748-016-0094-0).
 
-![alt text](https://github.com/edwisdom/toxic-comments/blob/master/imbalance.png "Class Imbalance in Training Data")
+![alt text](https://github.com/edwisdom/protein-functions/blob/master/freq_labels.png "Label Imbalance in Protein-Protein Interaction Data")
+
+### Multi-Label Frequencies
+
+Some proteins have multiple labels, thus complicating our task, since most clustering algorithms perform best when they have to [partition the data](https://link.springer.com/article/10.1007/s40745-015-0040-1) into separate clusters. Although the number of proteins goes down as we increase the number of labels, the majority of our data does have multiple labels. 
+
+![alt text](https://github.com/edwisdom/protein-functions/blob/master/freq_num_labels.png "Multi-Label Frequency in PPI Data")
+
 
 ### Multiple Correlated Labels
 
-As the following table shows, there is significant overlap between "toxic" and the other classes. For example, the sentences labeled "severely toxic" are a subset of those labeled "toxic."
+As the following heatmap shows, there is significant overlap between some functional labels and others. A curious finding was that "#" does not correlate with any other labels -- this is because its biological annotation in the BioGRID database is "unclear classification." 
 
-<table border="1" class="dataframe">
-  <thead>
-    <tr>
-      <th></th>
-      <th colspan="2" halign="left">severe_toxic</th>
-      <th colspan="2" halign="left">obscene</th>
-      <th colspan="2" halign="left">threat</th>
-      <th colspan="2" halign="left">insult</th>
-      <th colspan="2" halign="left">identity_hate</th>
-    </tr>
-    <tr>
-      <th></th>
-      <th>0</th>
-      <th>1</th>
-      <th>0</th>
-      <th>1</th>
-      <th>0</th>
-      <th>1</th>
-      <th>0</th>
-      <th>1</th>
-      <th>0</th>
-      <th>1</th>
-    </tr>
-    <tr>
-      <th>toxic</th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>144277</td>
-      <td>0</td>
-      <td>143754</td>
-      <td>523</td>
-      <td>144248</td>
-      <td>29</td>
-      <td>143744</td>
-      <td>533</td>
-      <td>144174</td>
-      <td>103</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>13699</td>
-      <td>1595</td>
-      <td>7368</td>
-      <td>7926</td>
-      <td>14845</td>
-      <td>449</td>
-      <td>7950</td>
-      <td>7344</td>
-      <td>13992</td>
-      <td>1302</td>
-    </tr>
-  </tbody>
-</table>
+![alt text](https://github.com/edwisdom/protein-functions/blob/master/corr_heatmap.png "Protein Function Correlations Heatmap")
+
+### A Scale-Free, Non-Random Network
+
+The PPI network is [scale-free](http://rakaposhi.eas.asu.edu/cse494/scalefree.pdf), exhibiting a pattern where a degree and its frequency in the network is inversely proportional. In other words, a few nodes have very high degree, whereas most do not. This also means that the average shortest path in the network will be relatively small, making it difficult to use conventional distance measures as a notion of similarity between nodes.
+
+![alt text](https://github.com/edwisdom/protein-functions/blob/master/degree_distribution.png "Degree Distribution of PPI Network")
 
 ## Model
 
