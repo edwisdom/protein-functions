@@ -176,20 +176,47 @@ def getEvalMetrics():
 	d['jaccard_score'] = compute_jaccard_score
 	return d
 
-def compute_jaccard_score(y_true, y_pred, normalize=True, sample_weight=None):
+def compute_jaccard_score(y_true, y_pred, num_unique_labels, normalize=True, sample_weight=None):
 	avg_accuracy = 0
+	true_pos_agg = 0
+	true_neg_agg = 0
+	false_pos_agg = 0
+	false_neg_agg = 0
 	for y in y_true:
+		true_pos = 0
+		true_neg = 0
+		false_pos = 0
+		false_neg = 0
 		labels = y_true[y]
 		try:
 			predictions = y_pred[y]
 		except:
 			predictions = []
+		
+		for label in labels:
+			if label in predictions:
+				true_pos += 1
+			else:
+				false_neg += 1
+		false_pos = len(predictions) - true_pos
+		true_neg = num_unique_labels - len(predictions) - false_neg
+
+		true_pos_agg += true_pos
+		true_neg_agg += true_neg
+		false_pos_agg += false_pos
+		false_neg_agg += false_neg
+
 		lab_set = set(labels)
 		pred_set = set(predictions)
+		for label in labels:
+			if label in predictions:
+				true_pos += 1
+
+
 		jac_sim = len(lab_set.intersection(pred_set)) / len(lab_set.union(pred_set))
 		avg_accuracy += jac_sim
 		#avg_accuracy += metrics.jaccard_similarity_score(labels, predictions, normalize, sample_weight)
-	return avg_accuracy/len(y_true)
+	return true_pos_agg, true_neg_agg, false_pos_agg, false_neg_agg#avg_accuracy/len(y_true)
 
 def mipsToLabels(mips, unique_labels):
 	i = 0
@@ -243,7 +270,7 @@ def predict_labels(clusters, mips_data, FDR): #untested
 		for protein in cluster:
 			try:
 				labels = mips_data[protein]
-				mips_prediction[protein] = labels
+				#mips_prediction[protein] = labels
 			except:
 				unlabeled_proteins.append(protein)
 				continue
@@ -328,22 +355,26 @@ if __name__ == '__main__':
 	clusters_by_names = [list(np.array(G.nodes)[cluster]) for cluster in clusters]
 	print(clusters_by_names)
 
-	predicted_mips = predict_labels(clusters_by_names, train, .5)
+	predicted_mips = predict_labels(clusters_by_names, train, .1)
 	print(predicted_mips)
 
-	evalMetrics = getEvalMetrics()
-	print(evalMetrics['jaccard_score'](mips,train))
-	print(evalMetrics['jaccard_score'](mips,predicted_mips))
+	print(compute_jaccard_score(mips, train, len(unique_labels)))
+	print(compute_jaccard_score(test, predicted_mips, len(unique_labels)))
+
+	# evalMetrics = getEvalMetrics()
+
+	# print(evalMetrics['jaccard_score'](mips,train))
+	# print(evalMetrics['jaccard_score'](test,predicted_mips))
 	
 	# print([len(c) for c in clusters]) # check lengths of clusters
 	
-	# test = np.zeros(dsd_A.shape[0])
-	# for cluster in clusters:
-	# 	test[cluster] += 1
+	test = np.zeros(dsd_A.shape[0])
+	for cluster in clusters:
+		test[cluster] += 1
 	
-	# print(sum(test))		# amount of representation
-	# print(len(test))		# versus total (for dropout)
-	# print(sum(test > 1)) 	# no overlapping clusters
+	print(sum(test))		# amount of representation
+	print(len(test))		# versus total (for dropout)
+	print(sum(test > 1)) 	# no overlapping clusters
 
 	
 
