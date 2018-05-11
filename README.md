@@ -34,7 +34,7 @@ This section covers some of our basic research in protein interaction networks a
 
 ### Protein-Protein Interaction Networks
 
-In the past few years, sequencing technology has given us data on a number of organisms' genome. However, interpreting this data requires understanding protein function, and experimental annotation simply cannot keep up (see figure 1). Therefore, protein-protein interaction networks have become increasingly important in predicting function, since network distance highly correlates with functional similarity (see figure 2).
+In the past few years, sequencing technology has given us data on a number of organisms' genome. However, interpreting this data requires understanding protein function, and experimental annotation simply cannot keep up (see Figure 1). Therefore, protein-protein interaction networks have become increasingly important in predicting function, since network distance highly correlates with functional similarity (see Figure 2).
 
 <figure>
     <img src='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1847944/bin/msb4100129-f1.jpg' width="800"/>
@@ -44,15 +44,19 @@ In the past few years, sequencing technology has given us data on a number of or
     </font>
 </figure>
 
+<figure>
+    <img src='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1847944/bin/msb4100129-f3.jpg' />
+    <font size="2">
+    <figcaption> Figure 2: Correlation between protein functional similarity and network distance, also from Sharan, Ulitsky, and Shamir 
+    </figcaption>
+    </font>
+</figure>
 
-![alt text][dist_corr]
-
-[dist_corr]: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1847944/bin/msb4100129-f3.jpg "Figure 2: Correlation between protein functional similarity and network distance, also from Sharan, Ulitsky, and Shamir"
 
 For more on PPI networks, read:
-- [The Unreasonable Effectiveness of RNNs](https://karpathy.github.io/2015/05/21/rnn-effectiveness/)
-- [A Beginner's Guide to RNNs](https://deeplearning4j.org/lstm.html)
-- [Comparative Study of CNN and RNN for NLP](https://arxiv.org/pdf/1702.01923.pdf)
+- [Introduction to Protein Function Prediction for Computer Scientists](http://biofunctionprediction.org/cafa-targets/Introduction_to_protein_prediction.pdf)
+- [Network-Based Prediction of Protein Function ](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1847944/)
+- [Review of ML Methods for Protein Function Prediction](https://www.frontiersin.org/articles/10.3389/fphys.2016.00075/full)
 
 ### Graph-Based Clustering
 
